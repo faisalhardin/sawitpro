@@ -37,7 +37,7 @@ var (
 	port       = os.Getenv("DB_PORT")
 	host       = os.Getenv("DB_HOST")
 	schema     = os.Getenv("DB_SCHEMA")
-	sslmode	   = os.Getenv("SSL_MODE")
+	sslmode    = os.Getenv("SSL_MODE")
 	dbInstance *service
 )
 
@@ -117,13 +117,14 @@ func (s *service) Close() error {
 	return s.db.Close()
 }
 
-
 func NewXormDB() (xormEngine *xorm.Engine, err error) {
 	dsn := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s search_path=%s sslmode=%s", host, port, database, username, password, schema, sslmode)
 	engine, err := xorm.NewEngine("pgx", dsn)
 	if err != nil {
 		return
 	}
+
+	engine.ShowSQL(true)
 
 	// Ping the database to verify the connection
 	if err = engine.Ping(); err != nil {
@@ -136,4 +137,9 @@ func NewXormDB() (xormEngine *xorm.Engine, err error) {
 
 	return engine, nil
 
+}
+
+func CloseXormDB(engine *xorm.Engine) error {
+	fmt.Println("closing db")
+	return engine.Close()
 }
