@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 
 	estateRepo "github.com/faisalhardin/sawitpro/internal/entity/interfaces"
 	model "github.com/faisalhardin/sawitpro/internal/entity/model"
@@ -74,8 +73,6 @@ func (uc *EstateUC) GetDronePlanByEstateUUID(ctx context.Context, uuid string) (
 		err = utils.SetNewNotFound("Not found", "Trees not found")
 		return
 	}
-
-	fmt.Println(treesHeights)
 
 	var (
 		distanceVerticalTraversed   int32 = 0
