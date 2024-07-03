@@ -11,10 +11,11 @@ import (
 const (
 	MstEstateTable = "swp_mst_estate"
 
-	WrapErrMsgPrefix                 = "EstateDBRepo."
-	WrapMsgInsertEstate              = WrapErrMsgPrefix + "InsertEstate"
-	WrapMsgGetEstateJoinTreeByParams = WrapErrMsgPrefix + "GetEstateJoinTreeByParams"
-	WrapMsgGetEstateStats            = WrapErrMsgPrefix + "GetEstateStats"
+	WrapErrMsgPrefix                    = "EstateDBRepo."
+	WrapMsgInsertEstate                 = WrapErrMsgPrefix + "InsertEstate"
+	WrapMsgGetEstateJoinTreeByParams    = WrapErrMsgPrefix + "GetEstateJoinTreeByParams"
+	WrapMsgGetEstateStats               = WrapErrMsgPrefix + "GetEstateStats"
+	WrapMsgGetEstateTreesHeightPosition = WrapErrMsgPrefix + "GetEstateTreesHeightPosition"
 )
 
 type Conn struct {
@@ -95,4 +96,35 @@ func (c *Conn) GetEstateStats(ctx context.Context, uuid string) (resp model.Esta
 	}
 
 	return
+}
+
+func (c *Conn) GetEstateTreesHeightPosition(ctx context.Context, estateUUID string) (heights []model.TreeHeight, err error) {
+
+	sql := `
+		WITH estate AS (
+				SELECT width, length, id
+				FROM swp_mst_estate
+				WHERE uuid = ?
+		), grid AS (
+				SELECT x, y
+				FROM generate_series(1, (SELECT length FROM estate)) AS x,
+						generate_series(1, (SELECT width FROM estate)) AS y
+		)
+		SELECT g.x AS position_x, g.y AS position_y, COALESCE(t.height, 0) AS height, t.*
+		FROM grid g
+		LEFT JOIN swp_trx_tree_estate t ON t.position_x = g.x AND t.position_y = g.y and t.delete_time is null and t.id_mst_estate = (SELECT id FROM estate)
+		ORDER BY g.y ASC, 
+			CASE
+			WHEN g.y % 2 = 0 THEN g.x END DESC,
+			CASE
+			WHEN g.y % 2 = 1 THEN g.x END ASC`
+
+	err = c.XormEngine.SQL(sql, estateUUID).Find(&heights)
+	if err != nil {
+		err = errors.Wrap(err, WrapMsgGetEstateTreesHeightPosition)
+		return
+	}
+
+	return
+
 }

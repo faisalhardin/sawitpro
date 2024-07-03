@@ -31,3 +31,11 @@ type EstateStats struct {
 	TreeMinHeight int   `xorm:"'min_height'" json:"min"`
 	TreeMedian    int   `xorm:"'median_height'" json:"median"`
 }
+
+type EstateDronePlanResponse struct {
+	Distance int32 `json:"distance"`
+}
+
+type TreeHeight struct {
+	Height int32 `xorm:"height"`
+}

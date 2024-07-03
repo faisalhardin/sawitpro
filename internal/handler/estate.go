@@ -50,6 +50,19 @@ func (h *EstateHandler) GetEstateStats(w http.ResponseWriter, r *http.Request) {
 	setOKWithData(r, w, resp)
 }
 
+func (h *EstateHandler) GetDronePlan(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	estateID := chi.URLParam(r, "uuid")
+	resp, err := h.EstateUsecase.GetDronePlanByEstateUUID(ctx, estateID)
+	if err != nil {
+		setError(r, w, err)
+		return
+	}
+
+	setOKWithData(r, w, resp)
+}
+
 func bind(r *http.Request, targetDecode interface{}) error {
 	bodyDecode := json.NewDecoder(r.Body)
 	err := bodyDecode.Decode(targetDecode)

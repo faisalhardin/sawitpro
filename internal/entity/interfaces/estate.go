@@ -13,16 +13,19 @@ type EstateRepo interface {
 	GetEstateJoinTreeByParams(ctx context.Context, params model.InsertNewTreeRequest) (resp []model.EstateJoinTrxTree, err error)
 	InsertTree(ctx context.Context, trxTree *model.TrxTree) (err error)
 	GetEstateStats(ctx context.Context, uuid string) (resp model.EstateStats, err error)
+	GetEstateTreesHeightPosition(ctx context.Context, estateUUID string) (heights []model.TreeHeight, err error)
 }
 
 type EstateUsecase interface {
 	InsertEstate(ctx context.Context, req model.InsertEstateRequest) (resp model.InsertEstateResponse, err error)
 	InsertNewTree(ctx context.Context, req model.InsertNewTreeRequest) (resp model.InsertNewTreeResponse, err error)
 	GetEstateStatsByUUID(ctx context.Context, uuid string) (resp model.EstateStats, err error)
+	GetDronePlanByEstateUUID(ctx context.Context, uuid string) (resp model.EstateDronePlanResponse, err error)
 }
 
 type EstateHandler interface {
 	InsertEstate(w http.ResponseWriter, r *http.Request)
 	InsertTree(w http.ResponseWriter, r *http.Request)
 	GetEstateStats(w http.ResponseWriter, r *http.Request)
+	GetDronePlan(w http.ResponseWriter, r *http.Request)
 }

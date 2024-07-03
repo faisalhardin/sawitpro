@@ -21,8 +21,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 		estate.Post("/", s.EstateHandler.InsertEstate)
 		estate.Post("/{uuid}/tree", s.EstateHandler.InsertTree)
 		estate.Get("/{uuid}/stats", s.EstateHandler.GetEstateStats)
-		estate.Get("/{id}/drone-plan", s.healthHandler)
-		estate.Get("/{id}/drone-plan", s.healthHandler)
+		estate.Get("/{uuid}/drone-plan", s.EstateHandler.GetDronePlan)
+		// estate.Get("/{id}/drone-plan", s.healthHandler)
 	})
 
 	return r

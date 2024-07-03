@@ -2,16 +2,21 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 
 	estateRepo "github.com/faisalhardin/sawitpro/internal/entity/interfaces"
 	model "github.com/faisalhardin/sawitpro/internal/entity/model"
+	"github.com/faisalhardin/sawitpro/internal/utils"
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 )
 
 const (
-	WrapErrMsgPrefix    = "EstateUsecase."
-	WrapMsgInsertEstate = WrapErrMsgPrefix + "InsertEstate"
+	WrapErrMsgPrefix                = "EstateUsecase."
+	WrapMsgInsertEstate             = WrapErrMsgPrefix + "InsertEstate"
+	WrapMsgGetDronePlanByEstateUUID = WrapErrMsgPrefix + "GetDronePlanByEstateUUID"
+
+	GridLength = int32(10)
 )
 
 type EstateUC struct {
@@ -56,4 +61,38 @@ func (uc *EstateUC) GetEstateStatsByUUID(ctx context.Context, uuid string) (resp
 	}
 
 	return
+}
+
+func (uc *EstateUC) GetDronePlanByEstateUUID(ctx context.Context, uuid string) (resp model.EstateDronePlanResponse, err error) {
+	treesHeights, err := uc.EstateDBRepo.GetEstateTreesHeightPosition(ctx, uuid)
+	if err != nil {
+		err = errors.Wrap(err, WrapMsgGetDronePlanByEstateUUID)
+		return
+	}
+
+	if len(treesHeights) == 0 {
+		err = utils.SetNewNotFound("Not found", "Trees not found")
+		return
+	}
+
+	fmt.Println(treesHeights)
+
+	var (
+		distanceVerticalTraversed   int32 = 0
+		distanceHorizontalTraversed int32 = 0
+		currHeight                  int32 = 0
+	)
+
+	for _, tree := range treesHeights {
+		distanceHorizontalTraversed += GridLength
+		distanceVerticalTraversed += utils.Abs(tree.Height - currHeight)
+		currHeight = tree.Height
+	}
+
+	distanceVerticalTraversed += 2 + currHeight // take0ff & land
+	distanceHorizontalTraversed -= GridLength   //last grid doesn't count
+
+	return model.EstateDronePlanResponse{
+		Distance: distanceVerticalTraversed + distanceHorizontalTraversed,
+	}, nil
 }
