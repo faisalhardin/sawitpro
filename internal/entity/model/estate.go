@@ -24,3 +24,10 @@ type EstateJoinTrxTree struct {
 	Estate EstateDB `xorm:"extends"`
 	Tree   TrxTree  `xorm:"extends"`
 }
+
+type EstateStats struct {
+	TreeCount     int16 `xorm:"'tree_count'" json:"count"`
+	TreeMaxHeight int   `xorm:"'max_height'" json:"max"`
+	TreeMinHeight int   `xorm:"'min_height'" json:"min"`
+	TreeMedian    int   `xorm:"'median_height'" json:"median"`
+}

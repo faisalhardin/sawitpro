@@ -18,7 +18,7 @@ func (c *Conn) InsertTree(ctx context.Context, trxTree *model.TrxTree) (err erro
 
 	session := c.XormEngine.NewSession().Table(TrxTreeEstateTable)
 
-	sql := `INSERT INTO public.swp_trx_tree_estate (position_x, position_y, height, estate_id, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?) RETURNING uuid`
+	sql := `INSERT INTO public.swp_trx_tree_estate (position_x, position_y, height, id_mst_estate, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?) RETURNING uuid`
 
 	_, err = session.SQL(
 		sql,

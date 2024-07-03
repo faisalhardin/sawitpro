@@ -9,9 +9,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-const(
-	WrapErrMsgPrefix = "EstateUsecase."
-	WrapMsgInsertEstate = WrapErrMsgPrefix+"InsertEstate"
+const (
+	WrapErrMsgPrefix    = "EstateUsecase."
+	WrapMsgInsertEstate = WrapErrMsgPrefix + "InsertEstate"
 )
 
 type EstateUC struct {
@@ -23,7 +23,7 @@ func NewEstateUC(uc *EstateUC) *EstateUC {
 }
 
 func (uc *EstateUC) InsertEstate(ctx context.Context, req model.InsertEstateRequest) (resp model.InsertEstateResponse, err error) {
-	
+
 	uuidV4, err := uuid.NewV4()
 	if err != nil {
 		err = errors.Wrap(err, WrapErrMsgPrefix)
@@ -31,9 +31,9 @@ func (uc *EstateUC) InsertEstate(ctx context.Context, req model.InsertEstateRequ
 	}
 
 	dbModel := model.EstateDB{
-		Width: req.Width,
+		Width:  req.Width,
 		Length: req.Length,
-		UUID: uuidV4.String(),
+		UUID:   uuidV4.String(),
 	}
 
 	err = uc.EstateDBRepo.InsertEstate(ctx, &dbModel)
@@ -42,7 +42,18 @@ func (uc *EstateUC) InsertEstate(ctx context.Context, req model.InsertEstateRequ
 		return
 	}
 
-	return  model.InsertEstateResponse{
+	return model.InsertEstateResponse{
 		ID: dbModel.UUID,
 	}, nil
+}
+
+func (uc *EstateUC) GetEstateStatsByUUID(ctx context.Context, uuid string) (resp model.EstateStats, err error) {
+
+	resp, err = uc.EstateDBRepo.GetEstateStats(ctx, uuid)
+	if err != nil {
+		err = errors.Wrap(err, WrapErrMsgPrefix)
+		return
+	}
+
+	return
 }

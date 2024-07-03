@@ -14,6 +14,11 @@ var (
 
 func (uc *EstateUC) InsertNewTree(ctx context.Context, req model.InsertNewTreeRequest) (resp model.InsertNewTreeResponse, err error) {
 
+	if req.Height <= 0 || req.Height > 30 {
+		err = utils.SetNewBadRequest("Validation", "Incorrect tree height")
+		return
+	}
+
 	mstEstate, err := uc.EstateDBRepo.GetEstateJoinTreeByParams(ctx, req)
 	if err != nil {
 		err = errors.Wrap(err, WrapMsgInsertNewTree)
@@ -25,12 +30,12 @@ func (uc *EstateUC) InsertNewTree(ctx context.Context, req model.InsertNewTreeRe
 		return
 	}
 
-	if len(mstEstate) > 0 && mstEstate[0].Tree.ID > 0 {
+	if mstEstate[0].Tree.ID > 0 {
 		err = utils.SetNewBadRequest("Validation", "Plot already has tree")
 		return
 	}
 
-	if len(mstEstate) > 0 && mstEstate[0].Estate.Length < req.PositionX || req.PositionX <= 0 || mstEstate[0].Estate.Width < req.PositionY || req.PositionY <= 0 {
+	if mstEstate[0].Estate.Length < req.PositionX || req.PositionX <= 0 || mstEstate[0].Estate.Width < req.PositionY || req.PositionY <= 0 {
 		err = utils.SetNewBadRequest("Validation", "Position is out of bound")
 		return
 	}

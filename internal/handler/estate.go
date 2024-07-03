@@ -6,6 +6,7 @@ import (
 
 	estateUsecase "github.com/faisalhardin/sawitpro/internal/entity/interfaces"
 	model "github.com/faisalhardin/sawitpro/internal/entity/model"
+	"github.com/go-chi/chi/v5"
 	"github.com/pkg/errors"
 )
 
@@ -28,6 +29,19 @@ func (h *EstateHandler) InsertEstate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp, err := h.EstateUsecase.InsertEstate(ctx, request)
+	if err != nil {
+		setError(r, w, err)
+		return
+	}
+
+	setOKWithData(r, w, resp)
+}
+
+func (h *EstateHandler) GetEstateStats(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	estateID := chi.URLParam(r, "uuid")
+	resp, err := h.EstateUsecase.GetEstateStatsByUUID(ctx, estateID)
 	if err != nil {
 		setError(r, w, err)
 		return

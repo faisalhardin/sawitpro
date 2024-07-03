@@ -14,6 +14,7 @@ const (
 	WrapErrMsgPrefix                 = "EstateDBRepo."
 	WrapMsgInsertEstate              = WrapErrMsgPrefix + "InsertEstate"
 	WrapMsgGetEstateJoinTreeByParams = WrapErrMsgPrefix + "GetEstateJoinTreeByParams"
+	WrapMsgGetEstateStats            = WrapErrMsgPrefix + "GetEstateStats"
 )
 
 type Conn struct {
@@ -56,11 +57,40 @@ func (c *Conn) GetEstateJoinTreeByParams(ctx context.Context, params model.Inser
 
 	err = session.
 		Alias("sme").
-		Join("LEFT", "swp_trx_tree_estate stte", "sme.id = stte.estate_id and stte.position_x = ? and stte.position_y = ?", params.PositionX, params.PositionY).
+		Join("LEFT", "swp_trx_tree_estate stte", "sme.id = stte.id_mst_estate and stte.position_x = ? and stte.position_y = ?", params.PositionX, params.PositionY).
 		Where("sme.uuid = ?", params.EstateUUID).
 		Find(&resp)
 	if err != nil {
 		err = errors.Wrap(err, WrapMsgGetEstateJoinTreeByParams)
+		return
+	}
+
+	return
+}
+
+func (c *Conn) GetEstateStats(ctx context.Context, uuid string) (resp model.EstateStats, err error) {
+	session := c.XormEngine.NewSession()
+
+	_, err = session.
+		SQL(`WITH estate_summary AS (
+				SELECT
+					COUNT(*) AS tree_count,
+					MAX(height) AS max_height,
+					MIN(height) AS min_height,
+					PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY height) AS median_height
+				FROM swp_trx_tree_estate stte
+				INNER JOIN swp_mst_estate sme ON sme.id = stte.id_mst_estate AND stte.delete_time is null
+				WHERE sme.uuid = ?
+			)
+			SELECT
+				COALESCE(tree_count, 0) AS tree_count,
+				COALESCE(max_height, 0) AS max_height,
+				COALESCE(min_height, 0) AS min_height,
+				COALESCE(median_height, 0) AS median_height
+			FROM estate_summary`, uuid).
+		Get(&resp)
+	if err != nil {
+		err = errors.Wrap(err, WrapMsgGetEstateStats)
 		return
 	}
 
