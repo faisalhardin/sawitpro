@@ -4,8 +4,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"sawitpro/internal/server"
 	"testing"
+
+	"github.com/faisalhardin/sawitpro/internal/server"
 )
 
 func TestHandler(t *testing.T) {

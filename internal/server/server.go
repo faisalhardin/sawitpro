@@ -9,21 +9,22 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	"sawitpro/internal/database"
+	"github.com/faisalhardin/sawitpro/internal/database"
+	estateHandler "github.com/faisalhardin/sawitpro/internal/entity/interfaces"
 )
 
 type Server struct {
 	port int
 
 	db database.Service
+	EstateHandler estateHandler.EstateHandler
 }
 
-func NewServer() *http.Server {
+func NewServer(handler estateHandler.EstateHandler) *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	NewServer := &Server{
 		port: port,
-
-		db: database.New(),
+		EstateHandler: handler,
 	}
 
 	// Declare Server config

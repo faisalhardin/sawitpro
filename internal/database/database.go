@@ -9,8 +9,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-xorm/xorm"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
+	"xorm.io/core"
 )
 
 // Service represents a service that interacts with a database.
@@ -35,6 +37,7 @@ var (
 	port       = os.Getenv("DB_PORT")
 	host       = os.Getenv("DB_HOST")
 	schema     = os.Getenv("DB_SCHEMA")
+	sslmode	   = os.Getenv("SSL_MODE")
 	dbInstance *service
 )
 
@@ -112,4 +115,25 @@ func (s *service) Health() map[string]string {
 func (s *service) Close() error {
 	log.Printf("Disconnected from database: %s", database)
 	return s.db.Close()
+}
+
+
+func NewXormDB() (xormEngine *xorm.Engine, err error) {
+	dsn := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s search_path=%s sslmode=%s", host, port, database, username, password, schema, sslmode)
+	engine, err := xorm.NewEngine("pgx", dsn)
+	if err != nil {
+		return
+	}
+
+	// Ping the database to verify the connection
+	if err = engine.Ping(); err != nil {
+		err = fmt.Errorf("failed to connect to database: %v", err)
+		return
+	}
+
+	engine.SetTableMapper(core.GonicMapper{})
+	engine.SetColumnMapper(core.GonicMapper{})
+
+	return engine, nil
+
 }
