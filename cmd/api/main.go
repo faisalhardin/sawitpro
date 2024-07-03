@@ -16,21 +16,20 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	
-	
+	defer database.CloseXormDB(engine)
+
 	repoEstate := repo.NewEstateDBRepo(&repo.Conn{
 		XormEngine: engine,
 	})
-	
+
 	estateUC := usecase.NewEstateUC(&usecase.EstateUC{
 		EstateDBRepo: repoEstate,
 	})
-	
+
 	handler := handler.NewEstateHandler(&handler.EstateHandler{
 		EstateUsecase: estateUC,
 	})
-	
-	
+
 	server := server.NewServer(handler)
 
 	err = server.ListenAndServe()
