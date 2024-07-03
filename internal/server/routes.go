@@ -19,12 +19,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Route("/estate", func(estate chi.Router) {
 		estate.Post("/", s.EstateHandler.InsertEstate)
-		estate.Post("/{id}/tree", s.healthHandler)
+		estate.Post("/{uuid}/tree", s.EstateHandler.InsertTree)
 		estate.Get("/{id}/stats", s.healthHandler)
 		estate.Get("/{id}/drone-plan", s.healthHandler)
 		estate.Get("/{id}/drone-plan", s.healthHandler)
 	})
-	
 
 	return r
 }

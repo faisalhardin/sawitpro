@@ -23,12 +23,14 @@ func (h *EstateHandler) InsertEstate(w http.ResponseWriter, r *http.Request) {
 	request := model.InsertEstateRequest{}
 	err := bind(r, &request)
 	if err != nil {
-		setError(r,w, err)
+		setError(r, w, err)
+		return
 	}
 
 	resp, err := h.EstateUsecase.InsertEstate(ctx, request)
 	if err != nil {
-		setError(r,w, err)
+		setError(r, w, err)
+		return
 	}
 
 	setOKWithData(r, w, resp)

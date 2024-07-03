@@ -11,8 +11,8 @@ import (
 const (
 	MstEstateTable = "swp_mst_estate"
 
-	WrapErrMsgPrefix = "EstateDBRepo."
-	WrapMsgInsertEstate = WrapErrMsgPrefix+"InsertEstate"
+	WrapErrMsgPrefix    = "EstateDBRepo."
+	WrapMsgInsertEstate = WrapErrMsgPrefix + "InsertEstate"
 )
 
 type Conn struct {
@@ -24,13 +24,28 @@ func NewEstateDBRepo(repo *Conn) *Conn {
 }
 
 func (c *Conn) InsertEstate(ctx context.Context, estate *model.EstateDB) (err error) {
-	
+
 	session := c.XormEngine.NewSession().Table(MstEstateTable)
 
 	_, err = session.InsertOne(estate)
 	if err != nil {
-		err = errors.Wrap(err, "InsertEstate")
+		err = errors.Wrap(err, WrapMsgInsertEstate)
+		return
 	}
-	
+
 	return nil
+}
+
+func (c *Conn) GetEstateByUUID(ctx context.Context, uuid string) (estate model.EstateDB, found bool, err error) {
+	session := c.XormEngine.NewSession().Table(MstEstateTable)
+
+	found, err = session.
+		Where("uuid = ?", uuid).
+		Get(&estate)
+	if err != nil {
+		err = errors.Wrap(err, WrapMsgInsertEstate)
+		return
+	}
+
+	return
 }
