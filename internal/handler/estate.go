@@ -47,11 +47,33 @@ func bind(r *http.Request, targetDecode interface{}) error {
 }
 
 func setError(r *http.Request, w http.ResponseWriter, errInput error) (err error) {
-	resp := model.Response{
-		Error: errInput.Error(),
+
+	switch errCause := errors.Cause(errInput).(type) {
+	case *model.Response:
+		writeErrJSON(w, errCause.Code, errCause)
+	default:
+		writeErrJSON(w, http.StatusNotFound, model.Response{
+			Data:    "Not Found",
+			ErrName: "404",
+		})
 	}
-	_, err = write(w, r, http.StatusBadRequest, resp)
 	return err
+}
+
+func writeErrJSON(w http.ResponseWriter, status int, data interface{}) (int, error) {
+	w.Header().Set("Content-Type", "application/json")
+	b, err := json.Marshal(data)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		writeLen, writeErr := w.Write([]byte(`{"errors":["Internal Server Error"]}`))
+		if writeErr != nil {
+			return writeLen, writeErr
+		}
+		return writeLen, err
+	}
+
+	w.WriteHeader(status)
+	return w.Write(b)
 }
 
 func setOKWithData(r *http.Request, w http.ResponseWriter, data interface{}) (err error) {

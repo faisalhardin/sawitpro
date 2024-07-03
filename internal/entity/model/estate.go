@@ -19,3 +19,8 @@ type InsertEstateRequest struct {
 var (
 	MockEstateDB = []EstateDB{}
 )
+
+type EstateJoinTrxTree struct {
+	Estate EstateDB `xorm:"extends"`
+	Tree   TrxTree  `xorm:"extends"`
+}

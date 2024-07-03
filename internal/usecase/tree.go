@@ -4,6 +4,7 @@ import (
 	"context"
 
 	model "github.com/faisalhardin/sawitpro/internal/entity/model"
+	"github.com/faisalhardin/sawitpro/internal/utils"
 	"github.com/pkg/errors"
 )
 
@@ -13,19 +14,24 @@ var (
 
 func (uc *EstateUC) InsertNewTree(ctx context.Context, req model.InsertNewTreeRequest) (resp model.InsertNewTreeResponse, err error) {
 
-	mstEstate, found, err := uc.EstateDBRepo.GetEstateByUUID(ctx, req.EstateUUID)
+	mstEstate, err := uc.EstateDBRepo.GetEstateJoinTreeByParams(ctx, req)
 	if err != nil {
 		err = errors.Wrap(err, WrapMsgInsertNewTree)
 		return
 	}
 
-	if !found {
-		err = errors.New("estate is not found")
+	if len(mstEstate) == 0 {
+		err = utils.SetNewNotFound("Validation", "Estate is not found")
 		return
 	}
 
-	if mstEstate.Length < req.PositionX || req.PositionX <= 0 || mstEstate.Width < req.PositionY || req.PositionY <= 0 {
-		err = errors.New("position is out of bound")
+	if len(mstEstate) > 0 && mstEstate[0].Tree.ID > 0 {
+		err = utils.SetNewBadRequest("Validation", "Plot already has tree")
+		return
+	}
+
+	if len(mstEstate) > 0 && mstEstate[0].Estate.Length < req.PositionX || req.PositionX <= 0 || mstEstate[0].Estate.Width < req.PositionY || req.PositionY <= 0 {
+		err = utils.SetNewBadRequest("Validation", "Position is out of bound")
 		return
 	}
 
@@ -33,7 +39,7 @@ func (uc *EstateUC) InsertNewTree(ctx context.Context, req model.InsertNewTreeRe
 		PositionX: req.PositionX,
 		PositionY: req.PositionY,
 		Height:    req.Height,
-		EstateID:  mstEstate.ID,
+		EstateID:  mstEstate[0].Estate.ID,
 	}
 
 	err = uc.EstateDBRepo.InsertTree(ctx, &newTree)

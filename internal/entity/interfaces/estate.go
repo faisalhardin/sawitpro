@@ -10,6 +10,7 @@ import (
 type EstateRepo interface {
 	InsertEstate(ctx context.Context, estate *model.EstateDB) (err error)
 	GetEstateByUUID(ctx context.Context, uuid string) (estate model.EstateDB, found bool, err error)
+	GetEstateJoinTreeByParams(ctx context.Context, params model.InsertNewTreeRequest) (resp []model.EstateJoinTrxTree, err error)
 	InsertTree(ctx context.Context, trxTree *model.TrxTree) (err error)
 }
 

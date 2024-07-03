@@ -1,6 +1,11 @@
 package model
 
+import "fmt"
+
 type Response struct {
-	Data  string `json:"message"`
-	Error string `json:"error,omitempty"`
+	Code    int    `json:"-"`
+	ErrName string `json:"error,omitempty"`
+	Data    string `json:"message,omitempty"`
 }
+
+func (resp *Response) Error() string { return fmt.Sprintf("%s: %s", resp.ErrName, resp.Data) }
