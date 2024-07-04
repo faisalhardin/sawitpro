@@ -11,7 +11,7 @@ func (h *EstateHandler) InsertTree(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	request := model.InsertNewTreeRequest{}
-	err := bind(r, &request)
+	err := bindFunc(r, &request)
 	if err != nil {
 		setError(r, w, err)
 		return
@@ -21,9 +21,9 @@ func (h *EstateHandler) InsertTree(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.EstateUsecase.InsertNewTree(ctx, request)
 	if err != nil {
-		setError(r, w, err)
+		setErrorFunc(r, w, err)
 		return
 	}
 
-	setOKWithData(r, w, resp)
+	setOKWithDataFunc(r, w, resp)
 }
