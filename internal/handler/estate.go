@@ -10,6 +10,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	setErrorFunc      = setError
+	setOKWithDataFunc = setOKWithData
+	bindFunc          = bind
+)
+
 type EstateHandler struct {
 	EstateUsecase estateUsecase.EstateUsecase
 }
@@ -22,19 +28,19 @@ func (h *EstateHandler) InsertEstate(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	request := model.InsertEstateRequest{}
-	err := bind(r, &request)
+	err := bindFunc(r, &request)
 	if err != nil {
-		setError(r, w, err)
+		setErrorFunc(r, w, err)
 		return
 	}
 
 	resp, err := h.EstateUsecase.InsertEstate(ctx, request)
 	if err != nil {
-		setError(r, w, err)
+		setErrorFunc(r, w, err)
 		return
 	}
 
-	setOKWithData(r, w, resp)
+	setOKWithDataFunc(r, w, resp)
 }
 
 func (h *EstateHandler) GetEstateStats(w http.ResponseWriter, r *http.Request) {
@@ -43,11 +49,11 @@ func (h *EstateHandler) GetEstateStats(w http.ResponseWriter, r *http.Request) {
 	estateID := chi.URLParam(r, "uuid")
 	resp, err := h.EstateUsecase.GetEstateStatsByUUID(ctx, estateID)
 	if err != nil {
-		setError(r, w, err)
+		setErrorFunc(r, w, err)
 		return
 	}
 
-	setOKWithData(r, w, resp)
+	setOKWithDataFunc(r, w, resp)
 }
 
 func (h *EstateHandler) GetDronePlan(w http.ResponseWriter, r *http.Request) {
@@ -56,11 +62,11 @@ func (h *EstateHandler) GetDronePlan(w http.ResponseWriter, r *http.Request) {
 	estateID := chi.URLParam(r, "uuid")
 	resp, err := h.EstateUsecase.GetDronePlanByEstateUUID(ctx, estateID)
 	if err != nil {
-		setError(r, w, err)
+		setErrorFunc(r, w, err)
 		return
 	}
 
-	setOKWithData(r, w, resp)
+	setOKWithDataFunc(r, w, resp)
 }
 
 func bind(r *http.Request, targetDecode interface{}) error {

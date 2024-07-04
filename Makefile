@@ -1,61 +1,39 @@
-# Simple Makefile for a Go project
 
-# Build the application
-all: build
 
-build:
+.PHONY: clean all init generate generate_mocks
+
+all: build/main
+
+build/main: cmd/api/main.go generated
 	@echo "Building..."
-	
-	
-	@go build -o main cmd/api/main.go
+	go build -o $@ $<
 
-# Run the application
-run:
-	@go run cmd/api/main.go
-
-# Create DB container
-docker-run:
-	@if docker compose up 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose up; \
-	fi
-
-# Shutdown DB container
-docker-down:
-	@if docker compose down 2>/dev/null; then \
-		: ; \
-	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose down; \
-	fi
-
-# Test the application
-test:
-	@echo "Testing..."
-	@go test ./tests -v
-
-# Clean the binary
 clean:
-	@echo "Cleaning..."
-	@rm -f main
+	rm -rf generated
 
-# Live Reload
-watch:
-	@if command -v air > /dev/null; then \
-	    air; \
-	    echo "Watching...";\
-	else \
-	    read -p "Go's 'air' is not installed on your machine. Do you want to install it? [Y/n] " choice; \
-	    if [ "$$choice" != "n" ] && [ "$$choice" != "N" ]; then \
-	        go install github.com/air-verse/air@latest; \
-	        air; \
-	        echo "Watching...";\
-	    else \
-	        echo "You chose not to install air. Exiting..."; \
-	        exit 1; \
-	    fi; \
-	fi
+init: clean generate
+	go mod tidy
+	go mod vendor
 
-.PHONY: all build run test clean
+test:
+	go clean -testcache
+	go test -short -coverprofile coverage.out -short -v ./...
+
+test_api:
+	go clean -testcache
+	go test ./tests/...
+
+generate: generated generate_mocks
+
+generated: api.yml
+	@echo "Generating files..."
+	mkdir generated || true
+	oapi-codegen --package generated -generate types,server,spec $< > generated/api.gen.go
+
+INTERFACES_GO_FILES := $(shell find repository -name "interfaces.go")
+INTERFACES_GEN_GO_FILES := $(INTERFACES_GO_FILES:%.go=%.mock.gen.go)
+
+generate_mocks: $(INTERFACES_GEN_GO_FILES)
+$(INTERFACES_GEN_GO_FILES): %.mock.gen.go: %.go
+	@echo "Generating mocks $@ for $<"
+	mockgen -source=$< -destination=$@ -package=$(shell basename $(dir $<))

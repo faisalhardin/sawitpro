@@ -8,6 +8,7 @@ import (
 	"github.com/faisalhardin/sawitpro/internal/repo"
 	"github.com/faisalhardin/sawitpro/internal/server"
 	"github.com/faisalhardin/sawitpro/internal/usecase"
+	_ "github.com/golang/mock/mockgen/model"
 )
 
 func main() {

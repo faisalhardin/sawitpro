@@ -18,6 +18,10 @@ const (
 	GridLength = int32(10)
 )
 
+var (
+	newUUID = NewUUIDString
+)
+
 type EstateUC struct {
 	EstateDBRepo estateRepo.EstateRepo
 }
@@ -28,7 +32,7 @@ func NewEstateUC(uc *EstateUC) *EstateUC {
 
 func (uc *EstateUC) InsertEstate(ctx context.Context, req model.InsertEstateRequest) (resp model.InsertEstateResponse, err error) {
 
-	uuidV4, err := uuid.NewV4()
+	uuidStr, err := newUUID()
 	if err != nil {
 		err = errors.Wrap(err, WrapErrMsgPrefix)
 		return
@@ -37,7 +41,7 @@ func (uc *EstateUC) InsertEstate(ctx context.Context, req model.InsertEstateRequ
 	dbModel := model.EstateDB{
 		Width:  req.Width,
 		Length: req.Length,
-		UUID:   uuidV4.String(),
+		UUID:   uuidStr,
 	}
 
 	err = uc.EstateDBRepo.InsertEstate(ctx, &dbModel)
@@ -92,4 +96,13 @@ func (uc *EstateUC) GetDronePlanByEstateUUID(ctx context.Context, uuid string) (
 	return model.EstateDronePlanResponse{
 		Distance: distanceVerticalTraversed + distanceHorizontalTraversed,
 	}, nil
+}
+
+func NewUUIDString() (string, error) {
+	uuidV4, err := uuid.NewV4()
+	if err != nil {
+		return "", err
+	}
+
+	return uuidV4.String(), nil
 }

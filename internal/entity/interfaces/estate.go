@@ -7,6 +7,7 @@ import (
 	model "github.com/faisalhardin/sawitpro/internal/entity/model"
 )
 
+//go:generate mockgen -destination=../mocks/mock_estate_repo.go -package=mocks github.com/faisalhardin/sawitpro/internal/entity/interfaces EstateRepo
 type EstateRepo interface {
 	InsertEstate(ctx context.Context, estate *model.EstateDB) (err error)
 	GetEstateByUUID(ctx context.Context, uuid string) (estate model.EstateDB, found bool, err error)
@@ -16,6 +17,7 @@ type EstateRepo interface {
 	GetEstateTreesHeightPosition(ctx context.Context, estateUUID string) (heights []model.TreeHeight, err error)
 }
 
+//go:generate mockgen -destination=../mocks/mock_estate_usecase.go -package=mocks github.com/faisalhardin/sawitpro/internal/entity/interfaces EstateUsecase
 type EstateUsecase interface {
 	InsertEstate(ctx context.Context, req model.InsertEstateRequest) (resp model.InsertEstateResponse, err error)
 	InsertNewTree(ctx context.Context, req model.InsertNewTreeRequest) (resp model.InsertNewTreeResponse, err error)
@@ -23,6 +25,7 @@ type EstateUsecase interface {
 	GetDronePlanByEstateUUID(ctx context.Context, uuid string) (resp model.EstateDronePlanResponse, err error)
 }
 
+//go:generate mockgen -destination=../mocks/mock_estate_handler.go -package=mocks github.com/faisalhardin/sawitpro/internal/entity/interfaces EstateHandler
 type EstateHandler interface {
 	InsertEstate(w http.ResponseWriter, r *http.Request)
 	InsertTree(w http.ResponseWriter, r *http.Request)

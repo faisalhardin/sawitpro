@@ -28,7 +28,7 @@ func NewEstateDBRepo(repo *Conn) *Conn {
 
 func (c *Conn) InsertEstate(ctx context.Context, estate *model.EstateDB) (err error) {
 
-	session := c.XormEngine.NewSession().Table(MstEstateTable)
+	session := c.XormEngine.Table(MstEstateTable)
 
 	_, err = session.InsertOne(estate)
 	if err != nil {

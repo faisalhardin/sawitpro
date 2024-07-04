@@ -8,7 +8,7 @@ import (
 
 func SetNewError(code int, errorName, errDesc string) *model.Response {
 	return &model.Response{
-		Code:    http.StatusBadRequest,
+		Code:    code,
 		Data:    errDesc,
 		ErrName: errorName,
 	}

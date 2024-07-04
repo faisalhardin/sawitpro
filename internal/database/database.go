@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-xorm/xorm"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
@@ -142,4 +143,14 @@ func NewXormDB() (xormEngine *xorm.Engine, err error) {
 func CloseXormDB(engine *xorm.Engine) error {
 	fmt.Println("closing db")
 	return engine.Close()
+}
+
+// NewMockDB instantiates a new mock DB for unit testing purposes.
+func NewMockDB() (*xorm.Engine, sqlmock.Sqlmock) {
+	db, mock, _ := sqlmock.New()
+
+	mockEngine, _ := xorm.NewEngine("pgx", "postgresql://root:123@localhost:123/test?charset=utf8")
+	mockEngine.DB().DB = db
+
+	return mockEngine, mock
 }
