@@ -1,16 +1,36 @@
-version: '3.8'
-
 services:
-  psql:
-    image: postgres:latest
-    environment:
-      POSTGRES_DB: ${DB_DATABASE}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+  app:
+    build: .
     ports:
-      - "${DB_PORT}:5432"
+      - "8080:1323"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/database?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    platform: linux/x86_64
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: database
+    ports:
+      - 5432:5432
+    expose:
+      - 5432
     volumes:
-      - psql_volume:/var/lib/postgresql/data
-
+      - db:/var/lib/postgresql/data
+      # Load database schema from ./database.sql
+      # If you want to reload new database schema, you need to execute
+      # `docker-compose down --volumes` first to remove the volume.
+      - ./database.sql:/docker-entrypoint-initdb.d/database.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 volumes:
-  psql_volume:
+  db:
+    driver: local
