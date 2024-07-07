@@ -19,7 +19,8 @@ const (
 )
 
 var (
-	newUUID = NewUUIDString
+	newUUID   = NewUUIDString
+	uuidNewV4 = uuid.NewV4
 )
 
 type EstateUC struct {
@@ -66,8 +67,9 @@ func (uc *EstateUC) GetEstateStatsByUUID(ctx context.Context, uuid string) (resp
 	return
 }
 
-func (uc *EstateUC) GetDronePlanByEstateUUID(ctx context.Context, uuid string) (resp model.EstateDronePlanResponse, err error) {
-	treesHeights, err := uc.EstateDBRepo.GetEstateTreesHeightPosition(ctx, uuid)
+func (uc *EstateUC) GetDronePlanByEstateUUID(ctx context.Context, params model.GetDronePlanParams) (resp model.EstateDronePlanResponse, err error) {
+
+	treesHeights, err := uc.EstateDBRepo.GetEstateTreesHeightPosition(ctx, params.UUID)
 	if err != nil {
 		err = errors.Wrap(err, WrapMsgGetDronePlanByEstateUUID)
 		return
@@ -79,27 +81,65 @@ func (uc *EstateUC) GetDronePlanByEstateUUID(ctx context.Context, uuid string) (
 	}
 
 	var (
-		distanceVerticalTraversed   int32 = 0
-		distanceHorizontalTraversed int32 = 0
-		currHeight                  int32 = 0
+		distanceTraversed int32 = 0
+		currHeight        int32 = 0
+		maxDistance       int32 = params.MaxDistance
+		isCheckBattery    bool  = false
+		lastCoordinates   model.TreeHeight
 	)
 
-	for _, tree := range treesHeights {
-		distanceHorizontalTraversed += GridLength
-		distanceVerticalTraversed += utils.Abs(tree.Height - currHeight)
-		currHeight = tree.Height
+	if maxDistance > 0 {
+		isCheckBattery = true
 	}
 
-	distanceVerticalTraversed += 2 + currHeight // take0ff & land
-	distanceHorizontalTraversed -= GridLength   //last grid doesn't count
+	distanceTraversed = 1 // takeoff
 
-	return model.EstateDronePlanResponse{
-		Distance: distanceVerticalTraversed + distanceHorizontalTraversed,
-	}, nil
+	for i, tree := range treesHeights {
+
+		distanceTraversed += utils.Abs(currHeight - tree.Height)
+
+		if isCheckBattery {
+			if distanceTraversed > maxDistance {
+				break
+			}
+			lastCoordinates = tree
+
+		}
+
+		hDist := GridLength
+		if i == 0 || i == len(treesHeights)-1 {
+			hDist = GridLength / 2
+		}
+		distanceTraversed += hDist
+		currHeight = tree.Height
+
+	}
+
+	distanceTraversed += 1 + currHeight // land
+
+	resp = model.EstateDronePlanResponse{
+		Distance: distanceTraversed,
+	}
+
+	if isCheckBattery &&
+		lastCoordinates.PositionX != 0 &&
+		lastCoordinates != treesHeights[len(treesHeights)-1] {
+
+		resp = model.EstateDronePlanResponse{
+			Distance: maxDistance,
+			Rest: &model.Coordinates{
+				PositionX: lastCoordinates.PositionX,
+				PositionY: lastCoordinates.PositionY,
+			},
+		}
+
+	}
+
+	return resp, nil
 }
 
 func NewUUIDString() (string, error) {
-	uuidV4, err := uuid.NewV4()
+	uuidV4, err := uuidNewV4()
 	if err != nil {
 		return "", err
 	}

@@ -36,7 +36,7 @@ func (m *MockEstateUsecase) EXPECT() *MockEstateUsecaseMockRecorder {
 }
 
 // GetDronePlanByEstateUUID mocks base method.
-func (m *MockEstateUsecase) GetDronePlanByEstateUUID(arg0 context.Context, arg1 string) (model.EstateDronePlanResponse, error) {
+func (m *MockEstateUsecase) GetDronePlanByEstateUUID(arg0 context.Context, arg1 model.GetDronePlanParams) (model.EstateDronePlanResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDronePlanByEstateUUID", arg0, arg1)
 	ret0, _ := ret[0].(model.EstateDronePlanResponse)

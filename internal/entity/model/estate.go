@@ -33,9 +33,22 @@ type EstateStats struct {
 }
 
 type EstateDronePlanResponse struct {
-	Distance int32 `json:"distance"`
+	Distance int32        `json:"distance"`
+	Rest     *Coordinates `json:"rest,omitempty"`
+}
+
+type Coordinates struct {
+	PositionX int32 `json:"x"`
+	PositionY int32 `json:"y"`
 }
 
 type TreeHeight struct {
-	Height int32 `xorm:"height"`
+	Height    int32 `xorm:"height"`
+	PositionX int32 `xorm:"position_x"`
+	PositionY int32 `xorm:"position_y"`
+}
+
+type GetDronePlanParams struct {
+	UUID        string `schema:"uuid"`
+	MaxDistance int32  `schema:"max-distance"`
 }

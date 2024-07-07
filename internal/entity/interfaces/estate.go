@@ -22,7 +22,7 @@ type EstateUsecase interface {
 	InsertEstate(ctx context.Context, req model.InsertEstateRequest) (resp model.InsertEstateResponse, err error)
 	InsertNewTree(ctx context.Context, req model.InsertNewTreeRequest) (resp model.InsertNewTreeResponse, err error)
 	GetEstateStatsByUUID(ctx context.Context, uuid string) (resp model.EstateStats, err error)
-	GetDronePlanByEstateUUID(ctx context.Context, uuid string) (resp model.EstateDronePlanResponse, err error)
+	GetDronePlanByEstateUUID(ctx context.Context, params model.GetDronePlanParams) (resp model.EstateDronePlanResponse, err error)
 }
 
 //go:generate mockgen -destination=../mocks/mock_estate_handler.go -package=mocks github.com/faisalhardin/sawitpro/internal/entity/interfaces EstateHandler

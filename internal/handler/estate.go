@@ -7,6 +7,7 @@ import (
 	estateUsecase "github.com/faisalhardin/sawitpro/internal/entity/interfaces"
 	model "github.com/faisalhardin/sawitpro/internal/entity/model"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/schema"
 	"github.com/pkg/errors"
 )
 
@@ -60,7 +61,15 @@ func (h *EstateHandler) GetDronePlan(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	estateID := chi.URLParam(r, "uuid")
-	resp, err := h.EstateUsecase.GetDronePlanByEstateUUID(ctx, estateID)
+	params := model.GetDronePlanParams{}
+	err := decodeSchemaRequest(r, &params)
+	if err != nil {
+		return
+	}
+
+	params.UUID = estateID
+
+	resp, err := h.EstateUsecase.GetDronePlanByEstateUUID(ctx, params)
 	if err != nil {
 		setErrorFunc(r, w, err)
 		return
@@ -69,7 +78,23 @@ func (h *EstateHandler) GetDronePlan(w http.ResponseWriter, r *http.Request) {
 	setOKWithDataFunc(r, w, resp)
 }
 
+func decodeSchemaRequest(r *http.Request, val interface{}) error {
+	sourceDecode := r.URL.Query()
+	decoder := schema.NewDecoder()
+	if err := decoder.Decode(val, sourceDecode); err != nil {
+		return err
+	}
+	// return BindQuery(sourceDecode, val, ignoreStatus...)
+	return nil
+}
+
 func bind(r *http.Request, targetDecode interface{}) error {
+	if r.Method == http.MethodGet {
+		if err := decodeSchemaRequest(r, targetDecode); err != nil {
+			return err
+		}
+		return nil
+	}
 	bodyDecode := json.NewDecoder(r.Body)
 	err := bodyDecode.Decode(targetDecode)
 	if err != nil {

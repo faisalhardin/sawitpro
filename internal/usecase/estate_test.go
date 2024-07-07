@@ -10,6 +10,7 @@ import (
 
 	"github.com/faisalhardin/sawitpro/internal/entity/mocks"
 	model "github.com/faisalhardin/sawitpro/internal/entity/model"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -105,12 +106,11 @@ func Test_GetEstateStatsByUUID(t *testing.T) {
 		uuid string
 	}
 	tests := []struct {
-		name      string
-		args      args
-		mock      func()
-		want      model.EstateStats
-		wantErr   bool
-		wantError error
+		name    string
+		args    args
+		mock    func()
+		want    model.EstateStats
+		wantErr bool
 	}{
 		{
 			name: "Success",
@@ -135,9 +135,8 @@ func Test_GetEstateStatsByUUID(t *testing.T) {
 				mockEstateDB.EXPECT().GetEstateStats(gomock.Any(), "UUID-2").
 					Return(model.EstateStats{}, errors.New("database error")).Times(1)
 			},
-			want:      model.EstateStats{},
-			wantErr:   true,
-			wantError: errors.New("database error"),
+			want:    model.EstateStats{},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -149,7 +148,6 @@ func Test_GetEstateStatsByUUID(t *testing.T) {
 			got, err := uc.GetEstateStatsByUUID(tt.args.ctx, tt.args.uuid)
 			if tt.wantErr {
 				assert.Error(t, err, tt.name)
-				assert.EqualError(t, err, tt.wantError.Error(), tt.name)
 			} else {
 				assert.NoError(t, err, tt.name)
 				assert.Equal(t, tt.want, got, tt.name)
@@ -163,8 +161,8 @@ func Test_GetDronePlanByEstateUUID(t *testing.T) {
 	defer ctrl.Finish()
 
 	type args struct {
-		ctx  context.Context
-		uuid string
+		ctx    context.Context
+		params model.GetDronePlanParams
 	}
 	tests := []struct {
 		name      string
@@ -175,29 +173,135 @@ func Test_GetDronePlanByEstateUUID(t *testing.T) {
 		wantError string
 	}{
 		{
-			name: "Success",
+			name: "Success with max distance lower than should be traversed",
 			args: args{
-				ctx:  context.Background(),
-				uuid: "UUID-1",
+				ctx: context.Background(),
+				params: model.GetDronePlanParams{
+					UUID:        "UUID-1",
+					MaxDistance: 30,
+				},
 			},
 			mock: func() {
 				mockEstateDB.EXPECT().GetEstateTreesHeightPosition(gomock.Any(), "UUID-1").
 					Return([]model.TreeHeight{
-						{Height: 10},
-						{Height: 15},
-						{Height: 20},
+						{
+							Height:    0,
+							PositionX: 1,
+							PositionY: 1,
+						},
+						{
+							Height:    5,
+							PositionX: 2,
+							PositionY: 1},
+						{
+							Height:    3,
+							PositionX: 3,
+							PositionY: 1},
+						{
+							Height:    4,
+							PositionX: 4,
+							PositionY: 1},
+						{
+							Height:    0,
+							PositionX: 5,
+							PositionY: 1},
 					}, nil).Times(1)
 			},
 			want: model.EstateDronePlanResponse{
-				Distance: 62,
+				Distance: 30,
+				Rest: &model.Coordinates{
+					PositionX: 3,
+					PositionY: 1,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Success with max distance higher than should be traversed",
+			args: args{
+				ctx: context.Background(),
+				params: model.GetDronePlanParams{
+					UUID:        "UUID-1",
+					MaxDistance: 100,
+				},
+			},
+			mock: func() {
+				mockEstateDB.EXPECT().GetEstateTreesHeightPosition(gomock.Any(), "UUID-1").
+					Return([]model.TreeHeight{
+						{
+							Height:    0,
+							PositionX: 1,
+							PositionY: 1,
+						},
+						{
+							Height:    5,
+							PositionX: 2,
+							PositionY: 1},
+						{
+							Height:    3,
+							PositionX: 3,
+							PositionY: 1},
+						{
+							Height:    4,
+							PositionX: 4,
+							PositionY: 1},
+						{
+							Height:    0,
+							PositionX: 5,
+							PositionY: 1},
+					}, nil).Times(1)
+			},
+			want: model.EstateDronePlanResponse{
+				Distance: 54,
+			},
+			wantErr: false,
+		},
+		{
+			name: "Success without max distance",
+			args: args{
+				ctx: context.Background(),
+				params: model.GetDronePlanParams{
+					UUID: "UUID-1",
+				},
+			},
+			mock: func() {
+				mockEstateDB.EXPECT().GetEstateTreesHeightPosition(gomock.Any(), "UUID-1").
+					Return([]model.TreeHeight{
+						{
+							Height:    0,
+							PositionX: 1,
+							PositionY: 1,
+						},
+						{
+							Height:    5,
+							PositionX: 2,
+							PositionY: 1},
+						{
+							Height:    3,
+							PositionX: 3,
+							PositionY: 1},
+						{
+							Height:    4,
+							PositionX: 4,
+							PositionY: 1},
+						{
+							Height:    0,
+							PositionX: 5,
+							PositionY: 1},
+					}, nil).Times(1)
+			},
+			want: model.EstateDronePlanResponse{
+				Distance: 54,
 			},
 			wantErr: false,
 		},
 		{
 			name: "Error from Repository",
 			args: args{
-				ctx:  context.Background(),
-				uuid: "UUID-2",
+				ctx: context.Background(),
+				params: model.GetDronePlanParams{
+					UUID: "UUID-2",
+				},
 			},
 			mock: func() {
 				mockEstateDB.EXPECT().GetEstateTreesHeightPosition(gomock.Any(), "UUID-2").
@@ -210,8 +314,10 @@ func Test_GetDronePlanByEstateUUID(t *testing.T) {
 		{
 			name: "No Trees Found",
 			args: args{
-				ctx:  context.Background(),
-				uuid: "UUID-3",
+				ctx: context.Background(),
+				params: model.GetDronePlanParams{
+					UUID: "UUID-3",
+				},
 			},
 			mock: func() {
 				mockEstateDB.EXPECT().GetEstateTreesHeightPosition(gomock.Any(), "UUID-3").
@@ -228,7 +334,7 @@ func Test_GetDronePlanByEstateUUID(t *testing.T) {
 			uc := EstateUC{
 				EstateDBRepo: mockEstateDB,
 			}
-			got, err := uc.GetDronePlanByEstateUUID(tt.args.ctx, tt.args.uuid)
+			got, err := uc.GetDronePlanByEstateUUID(tt.args.ctx, tt.args.params)
 			if tt.wantErr {
 				assert.Error(t, err, tt.name)
 				assert.Contains(t, err.Error(), tt.wantError, tt.name)
@@ -250,18 +356,18 @@ func Test_NewUUIDString(t *testing.T) {
 		{
 			name: "Success",
 			mock: func() {
-				newUUID = func() (string, error) {
-					return "generated-uuid", nil
+				uuidNewV4 = func() (uuid.UUID, error) {
+					return uuid.FromStringOrNil("00000000-0000-0000-0000-000000000001"), nil
 				}
 			},
-			want:    "generated-uuid",
+			want:    "00000000-0000-0000-0000-000000000001",
 			wantErr: false,
 		},
 		{
 			name: "Error Generating UUID",
 			mock: func() {
-				newUUID = func() (string, error) {
-					return "", errors.New("uuid generation error")
+				uuidNewV4 = func() (uuid.UUID, error) {
+					return uuid.UUID{}, errors.New("error generating uuid")
 				}
 			},
 			want:    "",

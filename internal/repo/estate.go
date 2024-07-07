@@ -110,7 +110,7 @@ func (c *Conn) GetEstateTreesHeightPosition(ctx context.Context, estateUUID stri
 				FROM generate_series(1, (SELECT length FROM estate)) AS x,
 						generate_series(1, (SELECT width FROM estate)) AS y
 		)
-		SELECT g.x AS position_x, g.y AS position_y, COALESCE(t.height, 0) AS height, t.*
+		SELECT g.x AS position_x, g.y AS position_y, COALESCE(t.height, 0) AS height
 		FROM grid g
 		LEFT JOIN swp_trx_tree_estate t ON t.position_x = g.x AND t.position_y = g.y and t.delete_time is null and t.id_mst_estate = (SELECT id FROM estate)
 		ORDER BY g.y ASC, 
