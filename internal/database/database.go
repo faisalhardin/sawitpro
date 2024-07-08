@@ -13,6 +13,7 @@ import (
 	"github.com/go-xorm/xorm"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
+	_ "github.com/lib/pq"
 	"xorm.io/core"
 )
 
@@ -32,14 +33,15 @@ type service struct {
 }
 
 var (
-	database   = os.Getenv("DB_DATABASE")
-	password   = os.Getenv("DB_PASSWORD")
-	username   = os.Getenv("DB_USERNAME")
-	port       = os.Getenv("DB_PORT")
-	host       = os.Getenv("DB_HOST")
-	schema     = os.Getenv("DB_SCHEMA")
-	sslmode    = os.Getenv("SSL_MODE")
-	dbInstance *service
+	database    = os.Getenv("DB_DATABASE")
+	password    = os.Getenv("DB_PASSWORD")
+	username    = os.Getenv("DB_USERNAME")
+	port        = os.Getenv("DB_PORT")
+	host        = os.Getenv("DB_HOST")
+	schema      = os.Getenv("DB_SCHEMA")
+	sslmode     = os.Getenv("SSL_MODE")
+	databaseURL = os.Getenv("DATABASE_URL")
+	dbInstance  *service
 )
 
 func New() Service {
@@ -119,8 +121,8 @@ func (s *service) Close() error {
 }
 
 func NewXormDB() (xormEngine *xorm.Engine, err error) {
-	dsn := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s search_path=%s sslmode=%s", host, port, database, username, password, schema, sslmode)
-	engine, err := xorm.NewEngine("pgx", dsn)
+	dsn := databaseURL
+	engine, err := xorm.NewEngine("postgres", dsn)
 	if err != nil {
 		return
 	}
